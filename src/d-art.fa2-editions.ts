@@ -10,6 +10,10 @@ program
     .action(contract.compileContract)
 
 program
+    .command('compile-serie-contract')
+    .action(contract.compileSerieContract)
+
+program
     .command('contract-size')
     .action(contract.calculateSize)
 
@@ -18,6 +22,10 @@ program
     .action(contract.deployContract)
 
 program
+    .command('deploy-serie-contract')
+    .action(contract.deploySerieContract)
+
+    program
     .command('gen-keypair')
     .option('-s, --seed <seed>', 'Seed phrase to generate keys')
     .action((seed: string) => {

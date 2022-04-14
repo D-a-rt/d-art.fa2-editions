@@ -61,7 +61,7 @@ let mint_edition_set (param, first_edition_token_id, ipfs_hash, storage : mint_e
     txs = mint.reversed_txs;
   } in
   let nop_operator_validator =
-    fun (p : address * address * token_id * operator_storage) -> unit in
+    fun (_p : address * address * token_id * operator_storage) -> unit in
   let ops, storage = fa2_transfer ([tx_descriptor], nop_operator_validator, mint.storage) in
   ops, storage
 #endif

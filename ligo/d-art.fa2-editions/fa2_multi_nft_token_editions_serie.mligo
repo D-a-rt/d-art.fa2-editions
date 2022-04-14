@@ -5,8 +5,11 @@
 #include "fa2_operator_lib.mligo"
 #include "fa2_multi_nft_manager.mligo"
 
-#include "admin.mligo"
+#if !ADMIN_SERIE
+#define ADMIN_SERIE
+#endif
 #include "fa2_multi_nft_asset.mligo"
+#include "serie_admin.mligo"
 
 type edition_id = nat
 
@@ -48,10 +51,6 @@ let fail_if_not_owner (sender, token_id, storage : address * token_id * editions
       if cur_o = sender
       then unit
       else (failwith fa2_insufficient_balance : unit)
-
-[@inline]
-let token_id_to_edition_id (token_id, storage : token_id * editions_storage) : edition_id =
-   (token_id/storage.max_editions_per_run)
 
 let mint_editions ( edition_run_list , storage : mint_edition_run list * editions_storage)
   : operation list * editions_storage =
@@ -116,17 +115,16 @@ let distribute_editions (distribute_list, storage : distribute_edition list * ed
   let new_storage = List.fold distribute_edition distribute_list storage in
   ([] : operation list), new_storage
 
-let editions_main (param, editions_storage : editions_entrypoints * editions_storage)
+let serie_editions_main (param, editions_storage : editions_entrypoints * editions_storage)
     : (operation  list) * editions_storage =
     match param with
     | FA2 nft_asset_entrypoints ->
         let ops, new_storage = nft_asset_main (nft_asset_entrypoints, editions_storage) in
         ops, new_storage
     | Mint_editions mint_param ->
-        let () : unit = fail_if_not_minter editions_storage.admin in
+        let () : unit = fail_if_not_admin editions_storage in
         (mint_editions (mint_param, editions_storage))
     | Distribute_editions distribute_param ->
-        let () : unit = fail_if_paused editions_storage.admin in
         (distribute_editions (distribute_param, editions_storage))
     | Burn_token token_id ->
       let () : unit = fail_if_not_owner (Tezos.sender, token_id, editions_storage) in

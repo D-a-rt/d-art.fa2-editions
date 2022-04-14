@@ -60,7 +60,7 @@ let transfer (txs, validate_op, ops_storage, ledger
   let make_transfer = fun (l, tx : ledger * transfer_descriptor) ->
     List.fold
       (fun (ll, dst : ledger * transfer_destination_descriptor) ->
-        let u = match tx.from_ with
+        let () = match tx.from_ with
         | None -> unit
         | Some owner -> validate_op (owner, Tezos.sender, dst.token_id, ops_storage)
         in
@@ -69,7 +69,7 @@ let transfer (txs, validate_op, ops_storage, ledger
         else if dst.amount = 0n
         then match Big_map.find_opt dst.token_id ll with
                | None -> (failwith fa2_token_undefined : ledger)
-               | Some cur_o -> ll (* zero transfer, don't change the ledger *)
+               | Some _cur_o -> ll (* zero transfer, don't change the ledger *)
         else
           let lll = dec_balance (tx.from_, dst.token_id, ll) in
           inc_balance(dst.to_, dst.token_id, lll)
