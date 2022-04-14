@@ -1,8 +1,3 @@
-
-#include "fa2_multi_nft_token.mligo"
-#include "fa2_multi_nft_manager.mligo"
-
-
 type edition_metadata =
 [@layout:comb]
 {
@@ -16,6 +11,9 @@ type edition_metadata =
 
 type editions_metadata = (nat, edition_metadata) big_map
 
+(* ADMIN_SERIE is here used in order to differentiate series contract and D a:rt contract
+  it get read of the unsued big_maps in the admin_storage and replace with a simple admin
+ *)
 #if !ADMIN_SERIE
 
 type editions_storage =

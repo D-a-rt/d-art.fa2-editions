@@ -6,20 +6,12 @@ helper functions
 #if !FA2_OPERATOR_LIB
 #define FA2_OPERATOR_LIB
 
-#include "fa2_errors.mligo"
-
 (**
 (owner, operator, token_id) -> unit
 To be part of FA2 storage to manage permitted operators
 *)
 
 type operator_storage = ((address * (address * token_id)), unit) big_map
-
-#if GLOBAL_OPERATOR
-
-type global_operator_storage = address set
-
-#endif
 
 (**
   Updates operator storage using an `update_operator` command.
@@ -43,7 +35,7 @@ let validate_update_operators_by_owner (update, updater : update_operator * addr
   | Add_operator op -> op
   | Remove_operator op -> op
   in
-  if op.owner = updater then unit else failwith fa2_not_owner
+  if op.owner = updater then unit else failwith "FA2_NOT_OWNER"
 
 (**
   Generic implementation of the FA2 `%update_operators` entrypoint.
@@ -62,11 +54,7 @@ let fa2_update_operators (updates, storage
   owner * operator * token_id * ops_storage -> unit
 *)
 
-#if !GLOBAL_OPERATOR
 type operator_params = address * address * token_id * operator_storage
-#else
-type operator_params = address * address * token_id * operator_storage * global_operator_storage
-#endif
 
 type operator_validator = operator_params -> unit
 
@@ -76,57 +64,12 @@ The default implicit `operator_transfer_policy` value is `Owner_or_operator_tran
  *)
 let default_operator_validator : operator_validator =
   (fun
-    (owner, operator, token_id, ops_storage
-#if GLOBAL_OPERATOR
-    , contract_ops_storage
-#endif
-     : operator_params) ->
+    (owner, operator, token_id, ops_storage: operator_params) ->
     if owner = operator
     then unit (* transfer by the owner *)
     else if Big_map.mem (owner, (operator, token_id)) ops_storage
     then unit (* the operator is permitted for the token_id *)
-#if GLOBAL_OPERATOR
-    else if Set.mem operator contract_ops_storage
-    then unit (* the operator is in fact a contract operator *)
-#endif
-    else failwith fa2_not_operator (* the operator is not permitted for the token_id *)
+    else failwith "FA2_NOT_OPERATOR" (* the operator is not permitted for the token_id *)
   )
 
-(**
-Create an operator validator function based on provided operator policy.
-@param tx_policy operator_transfer_policy defining the constrains on who can transfer.
-@return (owner, operator, token_id, ops_storage) -> unit
- *)
-
-#if !GLOBAL_OPERATOR
-let make_operator_validator (tx_policy : operator_transfer_policy) : operator_validator =
-  let can_owner_tx, can_operator_tx = match tx_policy with
-  | No_transfer -> (failwith fa2_tx_denied : bool * bool)
-  | Owner_transfer -> true, false
-  | Owner_or_operator_transfer -> true, true
-  in
-  (fun (owner, operator, token_id, ops_storage
-      : address * address * token_id * operator_storage) ->
-    if can_owner_tx && owner = operator
-    then unit (* transfer by the owner *)
-    else if not can_operator_tx
-    then failwith fa2_not_owner (* an operator transfer not permitted by the policy *)
-    else if Big_map.mem  (owner, (operator, token_id)) ops_storage
-    then unit (* the operator is permitted for the token_id *)
-    else failwith fa2_not_operator (* the operator is not permitted for the token_id *)
-  )
-(**
-Validate operators for all transfers in the batch at once
-@param tx_policy operator_transfer_policy defining the constrains on who can transfer.
-*)
-let validate_operator (tx_policy, txs, ops_storage
-    : operator_transfer_policy * (transfer list) * operator_storage) : unit =
-  let validator = make_operator_validator tx_policy in
-  List.iter (fun (tx : transfer) ->
-    List.iter (fun (dst: transfer_destination) ->
-      validator (tx.from_, Tezos.sender, dst.token_id ,ops_storage)
-    ) tx.txs
-  ) txs
-
-#endif
 #endif

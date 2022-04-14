@@ -58,7 +58,7 @@ export async function calculateSize(): Promise<void> {
     await new Promise<void>((resolve, reject) =>
         // Compile the contract
         child.exec(
-            path.join(__dirname, "../ligo/exec_ligo info measure-contract " + path.join(__dirname, "../ligo/d-art.fa2-editions/views.mligo") + "  -e editions_main -p hangzhou"),
+            path.join(__dirname, "../ligo/exec_ligo info measure-contract " + path.join(__dirname, "../ligo/d-art.fa2-editions/fa2_multi_nft_token_editions.mligo") + "  -e editions_main -p hangzhou"),
             (err, stdout) => {
                 if (err) {
                     console.log(kleur.red('Failed to calculate the contract size.'));

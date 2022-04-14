@@ -2,8 +2,6 @@
 
 #define FA2_MULTI_NFT_MINTER
 
-#include "fa2_multi_nft_token.mligo"
-
 type minted = {
   storage : nft_token_storage;
   reversed_txs : transfer_destination_descriptor list;
@@ -12,13 +10,13 @@ type minted = {
 type mint_edition_param =
 [@layout:comb]
 {
-  token_id: token_id;
+  token_metadata: token_metadata;
   owner : address;
 }
 
-type mint_editions_param = mint_edition_param list
+type create_editions_param = mint_edition_param list
 
-let create_txs_editions (param, first_edition_token_id, ipfs_hash, storage : mint_editions_param * nat * bytes * nft_token_storage)
+let create_txs_editions (param, first_edition_token_id, ipfs_hash, storage : create_editions_param * nat * bytes * nft_token_storage)
   : minted =
   let seed1 : minted = {
     storage = storage;
@@ -26,18 +24,13 @@ let create_txs_editions (param, first_edition_token_id, ipfs_hash, storage : min
   } in
   List.fold
     (fun (acc, t : minted * mint_edition_param) ->
-      let new_token_id = t.token_id in
+      let new_token_id = t.token_metadata.token_id in
       if (Big_map.mem new_token_id acc.storage.ledger)
       then (failwith "FA2_INVALID_TOKEN_ID" : minted)
       else
         let edition_number: int = new_token_id - first_edition_token_id + 1n in
-        let new_token_metadata_map = Map.literal [
-          ("", ipfs_hash);
-          ("edition_number", Bytes.pack edition_number)
-        ] in
         let new_token_metadata =
-          Big_map.add new_token_id { token_id = new_token_id; token_info = new_token_metadata_map } acc.storage.token_metadata in
-
+          Big_map.add new_token_id t.token_metadata acc.storage.token_metadata in
         let new_storage = { acc.storage with
           token_metadata = new_token_metadata;
         } in
@@ -52,7 +45,7 @@ let create_txs_editions (param, first_edition_token_id, ipfs_hash, storage : min
         }
     ) param seed1
 
-let mint_edition_set (param, first_edition_token_id, ipfs_hash, storage : mint_editions_param * nat * bytes * nft_token_storage)
+let mint_edition_set (param, first_edition_token_id, ipfs_hash, storage : create_editions_param * nat * bytes * nft_token_storage)
     : operation list * nft_token_storage =
   (* update ledger *)
   let mint = create_txs_editions (param, first_edition_token_id, ipfs_hash, storage) in

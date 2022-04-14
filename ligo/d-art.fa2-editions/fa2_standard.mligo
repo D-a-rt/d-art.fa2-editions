@@ -35,11 +35,11 @@ let dec_balance(owner, token_id, ledger : address option * token_id * ledger) : 
   | Some o -> (
     let current_owner = Big_map.find_opt token_id ledger in
     match current_owner with
-    | None -> (failwith fa2_token_undefined : ledger)
+    | None -> (failwith "FA2_TOKEN_UNDEFINED" : ledger)
     | Some cur_o ->
       if cur_o = o
       then Big_map.remove token_id ledger
-      else (failwith fa2_insufficient_balance : ledger)
+      else (failwith "FA2_INSUFFICIENT_BALANCE" : ledger)
   )
 
 let inc_balance(owner, token_id, ledger : address option * token_id * ledger) : ledger =
@@ -65,10 +65,10 @@ let transfer (txs, validate_op, ops_storage, ledger
         | Some owner -> validate_op (owner, Tezos.sender, dst.token_id, ops_storage)
         in
         if dst.amount > 1n
-        then (failwith fa2_insufficient_balance : ledger)
+        then (failwith "FA2_INSUFFICIENT_BALANCE" : ledger)
         else if dst.amount = 0n
         then match Big_map.find_opt dst.token_id ll with
-               | None -> (failwith fa2_token_undefined : ledger)
+               | None -> (failwith "FA2_TOKEN_UNDEFINED"  : ledger)
                | Some _cur_o -> ll (* zero transfer, don't change the ledger *)
         else
           let lll = dec_balance (tx.from_, dst.token_id, ll) in
@@ -93,7 +93,7 @@ let get_balance (p, ledger : balance_of_param * ledger) : operation =
   let to_balance = fun (r : balance_of_request) ->
     let owner = Big_map.find_opt r.token_id ledger in
     match owner with
-    | None -> (failwith fa2_token_undefined : balance_of_response)
+    | None -> (failwith "FA2_TOKEN_UNDEFINED"  : balance_of_response)
     | Some o ->
       let bal = if o = r.owner then 1n else 0n in
       { request = r; balance = bal; }

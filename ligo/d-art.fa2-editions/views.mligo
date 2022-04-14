@@ -1,5 +1,3 @@
-#include "fa2_multi_nft_token_editions.mligo"
-
 type royalties =
 [@layout:comb]
 {
