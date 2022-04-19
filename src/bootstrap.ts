@@ -46,7 +46,7 @@ export function createToolkit(signer: InMemorySigner) : TezosToolkit {
 
     toolkit.setProvider({
         signer: signer,
-        config: { confirmationPollingIntervalSecond: 5 }
+        config: {  }
     })
 
     return toolkit

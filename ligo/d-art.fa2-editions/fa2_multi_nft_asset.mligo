@@ -2,7 +2,7 @@ type edition_metadata =
 [@layout:comb]
 {
     creator : address;
-    ipfs_hash: bytes;
+    edition_info: (string, bytes) map;
     total_edition_number: nat;
     remaining_edition_number: nat;
     royalties_address: address;

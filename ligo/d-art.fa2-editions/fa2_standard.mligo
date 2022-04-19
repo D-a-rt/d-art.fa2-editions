@@ -2,13 +2,10 @@
 
 #define FA2_MULTI_NFT_TOKEN
 
-type nft_meta = (token_id, token_metadata) big_map
-
 type ledger = (token_id, address) big_map
 
 type nft_token_storage = {
   ledger : ledger;
-  token_metadata : nft_meta;
   operators : operator_storage;
 }
 

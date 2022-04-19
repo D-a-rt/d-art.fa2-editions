@@ -9,6 +9,13 @@ program
     .command('compile-contract')
     .action(contract.compileContract)
 
+// program
+//     .command('get-contract-view')
+//     .option('-c, --contract <contract>', 'Contract address')
+//     .action((contract: string) => {
+//         contract.getViews(contract)
+// })
+
 program
     .command('compile-serie-contract')
     .action(contract.compileSerieContract)

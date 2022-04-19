@@ -8,31 +8,21 @@
 
 type edition_id = nat
 
-[@inline]
-let token_id_to_edition_id (token_id, storage : token_id * editions_storage) : edition_id =
-   (token_id/storage.max_editions_per_run)
-
-#include "views.mligo"
-
 type mint_edition_run =
 [@layout:comb]
 {
-  ipfs_hash : bytes;
+  edition_info : (string, bytes) map;
+  total_edition_number : nat;
   royalties_percentage: nat;
   royalties_address: address;
-  total_edition_number : nat;
-}
-
-type receiver = {
-  address: address;
-  ipfs_hash: bytes;
+  receivers : (address list) option;
 }
 
 type mint_edition =
 [@layout:comb]
 {
   edition_id : edition_id;
-  receivers : receiver list;
+  receivers : address list;
 }
 
 type editions_entrypoints =
@@ -56,6 +46,26 @@ let fail_if_not_owner (sender, token_id, storage : address * token_id * editions
 let token_id_to_edition_id (token_id, storage : token_id * editions_storage) : edition_id =
    (token_id/storage.max_editions_per_run)
 
+let mint_edition_to_addresses ( edition_id, receivers, edition_metadata, storage : edition_id * (address list) * edition_metadata * editions_storage)
+  : editions_storage =
+  let mint_edition_to_address : ((create_editions_param * token_id) * address) -> (create_editions_param * token_id) =
+    fun ( (create_editions_param, token_id), address : (create_editions_param * token_id) * address) ->
+      let mint_edition_param : mint_edition_param = {
+          owner = address;
+          token_id = token_id;
+      } in
+      ((mint_edition_param :: create_editions_param) , token_id + 1n)
+  in
+  let total_edition_number_left_after_distribution : int = edition_metadata.remaining_edition_number - (List.length receivers) in
+  let () : unit = assert_msg(total_edition_number_left_after_distribution >= 0, "NO_EDITIONS_TO_DISTRIBUTE" ) in
+  let initial_token_id : nat = (edition_id * storage.max_editions_per_run) + abs (edition_metadata.total_edition_number - edition_metadata.remaining_edition_number) in
+  let create_editions_param, _ : create_editions_param * token_id = (List.fold mint_edition_to_address receivers (([] : create_editions_param), initial_token_id)) in
+  let new_edition_metadata : edition_metadata = {edition_metadata with remaining_edition_number = abs(total_edition_number_left_after_distribution)} in
+  let _ , nft_token_storage = mint_edition_set (create_editions_param, storage.assets) in
+  let new_editions_metadata = Big_map.update edition_id (Some new_edition_metadata) storage.editions_metadata in
+  let new_storage = {storage with assets = nft_token_storage; editions_metadata = new_editions_metadata} in
+  new_storage
+
 let create_editions ( edition_run_list , storage : mint_edition_run list * editions_storage)
   : operation list * editions_storage =
   let mint_single_edition_run : (editions_storage * mint_edition_run) -> editions_storage =
@@ -70,42 +80,29 @@ let create_editions ( edition_run_list , storage : mint_edition_run list * editi
          "EDITION_RUN_TOO_LARGE" ) in
       let edition_metadata : edition_metadata = {
         creator = Tezos.sender;
-        ipfs_hash = param.ipfs_hash;
+        edition_info = param.edition_info;
         royalties_percentage = param.royalties_percentage;
         royalties_address = param.royalties_address;
         total_edition_number = param.total_edition_number;
         remaining_edition_number = param.total_edition_number;
       } in
       let new_editions_metadata = Big_map.add storage.next_edition_id edition_metadata storage.editions_metadata in
-      {storage with
-          next_edition_id = storage.next_edition_id + 1n;
-          editions_metadata = new_editions_metadata;
-      } in
+
+      match param.receivers with
+        | None -> { storage with
+            next_edition_id = storage.next_edition_id + 1n;
+            editions_metadata = new_editions_metadata;
+          }
+        | Some receivers -> (
+          let edition_storage = {storage with
+            next_edition_id = storage.next_edition_id + 1n;
+            editions_metadata = new_editions_metadata;
+          } in
+          let new_editions_storage = mint_edition_to_addresses (storage.next_edition_id, receivers, edition_metadata, edition_storage) in
+          new_editions_storage
+        ) in
   let new_storage = List.fold mint_single_edition_run edition_run_list storage in
   ([] : operation list), new_storage
-
-let mint_edition_to_addresses ( edition_id, receivers, edition_metadata, storage : edition_id * (receiver list) * edition_metadata * editions_storage)
-  : editions_storage =
-  let mint_edition_to_address : ((create_editions_param * token_id) * receiver) -> (create_editions_param * token_id) =
-    fun ( (create_editions_param, token_id), rcv : (create_editions_param * token_id) * receiver) ->
-      let mint_edition_param : mint_edition_param = {
-          owner = rcv.address;
-          token_metadata = {
-            token_id = token_id;
-            token_info = Map.literal [ ("", rcv.ipfs_hash) ]
-          };
-      } in
-      ((mint_edition_param :: create_editions_param) , token_id + 1n)
-  in
-  let total_edition_number_left_after_distribution : int = edition_metadata.remaining_edition_number - (List.length receivers) in
-  let () : unit = assert_msg(total_edition_number_left_after_distribution >= 0, "NO_EDITIONS_TO_DISTRIBUTE" ) in
-  let initial_token_id : nat = (edition_id * storage.max_editions_per_run) + abs (edition_metadata.total_edition_number - edition_metadata.remaining_edition_number) in
-  let create_editions_param, _ : create_editions_param * token_id = (List.fold mint_edition_to_address receivers (([] : create_editions_param), initial_token_id)) in
-  let new_edition_metadata : edition_metadata = {edition_metadata with remaining_edition_number = abs(total_edition_number_left_after_distribution)} in
-  let _ , nft_token_storage = mint_edition_set (create_editions_param, (edition_id * storage.max_editions_per_run), edition_metadata.ipfs_hash, storage.assets) in
-  let new_editions_metadata = Big_map.update edition_id (Some new_edition_metadata) storage.editions_metadata in
-  let new_storage = {storage with assets = nft_token_storage; editions_metadata = new_editions_metadata} in
-  new_storage
 
 let mint_editions (distribute_list, storage : mint_edition list * editions_storage)
   : operation list * editions_storage =
