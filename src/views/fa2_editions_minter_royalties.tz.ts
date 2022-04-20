@@ -35,6 +35,7 @@ export default {
         GET ;
         IF_NONE
           { PUSH string "FA2_TOKEN_UNDEFINED" ; FAILWITH }
-          { DUP ; GET 10 ; SWAP ; CAR ; PAIR } } } }
+          { DUP ; GET 10 ; SWAP ; CAR ; PAIR } } }
   `
 } as EditionsMinterRoyaltiesViewCodeType;
+

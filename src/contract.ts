@@ -1,24 +1,24 @@
 require('dotenv').config()
 import * as fs from 'fs';
+import axios from 'axios';
 import * as path from 'path';
 import * as kleur from 'kleur';
 import * as child from 'child_process';
 
 import { loadFile } from './helper';
 import { InMemorySigner } from '@taquito/signer';
-import { char2Bytes, tzip16, Tzip16Module } from '@taquito/tzip16';
-import { Extension, MichelsonMap, TezosToolkit } from '@taquito/taquito';
+import { char2Bytes } from '@taquito/tzip16';
+import { MichelsonMap, TezosToolkit } from '@taquito/taquito';
 import { default as EditionsMetadata } from './views/fa2_editions_token_metadata_view.tz';
-import { Parser, packDataBytes, MichelsonData, MichelsonType } from '@taquito/michel-codec';
+import { Parser} from '@taquito/michel-codec';
 import { default as EditionsMinterRoyaltiesViewCodeType } from './views/fa2_editions_minter_royalties.tz';
-import axios from 'axios';
 
 
 export async function compileContract(): Promise<void> {
     await new Promise<void>((resolve, reject) =>
         // Compile the contract
         child.exec(
-            path.join(__dirname, "../ligo/exec_ligo compile contract " + path.join(__dirname, "../ligo/d-art.fa2-editions/views.mligo") + " -e editions_main -p hangzhou --views 'token_metadata, minter_royalties' "),
+            path.join(__dirname, "../ligo/exec_ligo compile contract " + path.join(__dirname, "../ligo/d-art.fa2-editions/views.mligo") + " -e editions_main -p hangzhou --views 'token_metadata, minter_royalties'"),
             (err, stdout) => {
                 if (err) {
                     console.log(kleur.red('Failed to compile the contract.'));
@@ -138,7 +138,8 @@ export async function deployContract(): Promise<void> {
             max_editions_per_run: 250,
             assets: {
                 ledger: MichelsonMap.fromLiteral({}),
-                operators: MichelsonMap.fromLiteral({})
+                operators: MichelsonMap.fromLiteral({}),
+                token_metadata: MichelsonMap.fromLiteral({})
             },
             admin: {
                 admin: 'tz1KhMoukVbwDXRZ7EUuDm7K9K5EmJSGewxd',

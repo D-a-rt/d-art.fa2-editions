@@ -7,6 +7,7 @@ type ledger = (token_id, address) big_map
 type nft_token_storage = {
   ledger : ledger;
   operators : operator_storage;
+  token_metadata: (token_id, token_metadata) big_map;
 }
 
 let transfers_to_descriptors (txs : transfer list) : transfer_descriptor list =
