@@ -24,6 +24,7 @@ type editions_storage =
     assets : nft_token_storage;
     admin : admin_storage;
     metadata: (string, bytes) big_map;
+    hash_used : (bytes, token_id) big_map;
 }
 
 type nft_asset_entrypoints =
@@ -54,6 +55,7 @@ type editions_storage =
     assets : nft_token_storage;
     admin : address;
     metadata: (string, bytes) big_map;
+    hash_used : (bytes, token_id) big_map;
 }
 
 type nft_asset_entrypoints =

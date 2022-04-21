@@ -11,7 +11,7 @@ type edition_id = nat
 type mint_edition_run =
 [@layout:comb]
 {
-  edition_info : (string, bytes) map;
+  edition_info : bytes;
   total_edition_number : nat;
   royalties_percentage: nat;
   royalties_address: address;
@@ -47,6 +47,12 @@ let fail_if_not_owner (sender, token_id, storage : address * token_id * editions
       then unit
       else (failwith "FA2_INSUFFICIENT_BALANCE" : unit)
 
+let fail_if_hash_used (ipfs_hash, storage : bytes * editions_storage) : unit =
+  if Big_map.mem ipfs_hash storage.hash_used
+  then failwith "HASH_ALREADY_USED"
+  else unit
+
+
 [@inline]
 let token_id_to_edition_id (token_id, storage : token_id * editions_storage) : edition_id =
    (token_id/storage.max_editions_per_run)
@@ -76,6 +82,7 @@ let create_editions ( edition_run_list , storage : mint_edition_run list * editi
   : operation list * editions_storage =
   let mint_single_edition_run : (editions_storage * mint_edition_run) -> editions_storage =
     fun (storage, param : editions_storage * mint_edition_run) ->
+      let () : unit = fail_if_hash_used (param.edition_info, storage) in
       let () : unit = assert_msg(param.royalties_percentage <= 100n,
         "ROYALTIES_CANT_EXCEED_100_PERCENT"
       ) in
@@ -86,7 +93,7 @@ let create_editions ( edition_run_list , storage : mint_edition_run list * editi
          "EDITION_RUN_TOO_LARGE" ) in
       let edition_metadata : edition_metadata = {
         creator = Tezos.sender;
-        edition_info = param.edition_info;
+        edition_info = Map.literal [("", param.edition_info)];
         royalties_percentage = param.royalties_percentage;
         royalties_address = param.royalties_address;
         total_edition_number = param.total_edition_number;
@@ -96,6 +103,7 @@ let create_editions ( edition_run_list , storage : mint_edition_run list * editi
         let edition_storage = {storage with
           next_edition_id = storage.next_edition_id + 1n;
           editions_metadata = new_editions_metadata;
+          hash_used = Big_map.add param.edition_info storage.next_edition_id storage.hash_used;
         } in
         let new_editions_storage = mint_edition_to_addresses (storage.next_edition_id, param.receivers, edition_metadata, edition_storage) in
         new_editions_storage

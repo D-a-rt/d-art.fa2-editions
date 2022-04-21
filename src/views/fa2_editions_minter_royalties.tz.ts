@@ -20,9 +20,9 @@ export default {
         SWAP ;
         DUP ;
         DUG 2 ;
+        CDR ;
         CAR ;
-        CDR ;
-        CDR ;
+        CAR ;
         SWAP ;
         EDIV ;
         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;

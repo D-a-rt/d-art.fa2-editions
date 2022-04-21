@@ -24,9 +24,9 @@ export default {
         DUP ;
         DUG 2 ;
         SWAP ;
+        CDR ;
         CAR ;
-        CDR ;
-        CDR ;
+        CAR ;
         SWAP ;
         EDIV ;
         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
@@ -44,9 +44,9 @@ export default {
           { GET 3 ;
             PUSH nat 1 ;
             DIG 4 ;
+            CDR ;
             CAR ;
-            CDR ;
-            CDR ;
+            CAR ;
             DIG 3 ;
             MUL ;
             DUP 4 ;

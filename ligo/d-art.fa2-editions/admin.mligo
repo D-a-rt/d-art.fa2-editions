@@ -63,7 +63,6 @@ let fail_if_not_minter (storage : admin_storage) : unit =
   then unit
   else failwith "NOT_A_MINTER"
 
-
 let admin_main(param, storage : admin_entrypoints * admin_storage)
     : (operation list) * admin_storage =
   match param with

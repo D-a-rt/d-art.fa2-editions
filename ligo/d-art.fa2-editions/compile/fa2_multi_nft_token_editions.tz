@@ -1,7 +1,7 @@
 { parameter
     (or (or (pair %burn_token (address %owner) (nat %token_id))
             (list %create_editions
-               (pair (map %edition_info string bytes)
+               (pair (bytes %edition_info)
                      (pair (nat %total_edition_number)
                            (pair (nat %royalties_percentage)
                                  (pair (address %royalties_address) (list %receivers address)))))))
@@ -37,8 +37,9 @@
                                      (pair (nat %total_edition_number)
                                            (pair (nat %remaining_edition_number)
                                                  (pair (address %royalties_address) (nat %royalties_percentage)))))))
-                      (nat %max_editions_per_run)))
-          (pair (big_map %metadata string bytes) (nat %next_edition_id))) ;
+                      (big_map %hash_used bytes nat)))
+          (pair (pair (nat %max_editions_per_run) (big_map %metadata string bytes))
+                (nat %next_edition_id))) ;
   code { LAMBDA
            (pair (pair (list (pair (option address) (list (pair (option address) (pair nat nat)))))
                        (lambda
@@ -202,16 +203,16 @@
                                          (pair (big_map
                                                   nat
                                                   (pair address (pair (map string bytes) (pair nat (pair nat (pair address nat))))))
-                                               nat))
-                                   (pair (big_map string bytes) nat)))))
+                                               (big_map bytes nat)))
+                                   (pair (pair nat (big_map string bytes)) nat)))))
            (pair (pair (pair (pair (pair address (big_map address unit)) (pair bool (option address)))
                              (pair (pair (big_map nat address) (big_map (pair address (pair address nat)) unit))
                                    (big_map nat (pair nat (map string bytes)))))
                        (pair (big_map
                                 nat
                                 (pair address (pair (map string bytes) (pair nat (pair nat (pair address nat))))))
-                             nat))
-                 (pair (big_map string bytes) nat))
+                             (big_map bytes nat)))
+                 (pair (pair nat (big_map string bytes)) nat))
            { UNPAIR ;
              UNPAIR ;
              DIG 2 ;
@@ -245,9 +246,9 @@
              SUB ;
              ABS ;
              DUP 4 ;
+             CDR ;
              CAR ;
-             CDR ;
-             CDR ;
+             CAR ;
              DUP 6 ;
              MUL ;
              ADD ;
@@ -450,6 +451,16 @@
                  MEM ;
                  IF {} { PUSH string "NOT_A_MINTER" ; FAILWITH } ;
                  ITER { SWAP ;
+                        DUP ;
+                        DUP 3 ;
+                        CAR ;
+                        SWAP ;
+                        CAR ;
+                        CDR ;
+                        CDR ;
+                        SWAP ;
+                        MEM ;
+                        IF { PUSH string "HASH_ALREADY_USED" ; FAILWITH } {} ;
                         PUSH string "ROYALTIES_CANT_EXCEED_100_PERCENT" ;
                         PUSH nat 100 ;
                         DUP 4 ;
@@ -476,9 +487,9 @@
                         SWAP ;
                         DUP ;
                         DUG 2 ;
+                        CDR ;
                         CAR ;
-                        CDR ;
-                        CDR ;
+                        CAR ;
                         DUP 4 ;
                         GET 3 ;
                         COMPARE ;
@@ -498,8 +509,12 @@
                         GET 3 ;
                         DUP 5 ;
                         GET 3 ;
-                        DUP 6 ;
+                        EMPTY_MAP string bytes ;
+                        DUP 7 ;
                         CAR ;
+                        SOME ;
+                        PUSH string "" ;
+                        UPDATE ;
                         SENDER ;
                         PAIR 6 ;
                         PUSH nat 1 ;
@@ -534,6 +549,31 @@
                         SOME ;
                         SWAP ;
                         UPDATE ;
+                        PAIR ;
+                        DIG 2 ;
+                        CAR ;
+                        CAR ;
+                        PAIR ;
+                        PAIR ;
+                        DUP ;
+                        CDR ;
+                        DUP 4 ;
+                        CAR ;
+                        CDR ;
+                        CDR ;
+                        DUP 5 ;
+                        CDR ;
+                        CDR ;
+                        DUP 7 ;
+                        CAR ;
+                        SWAP ;
+                        SOME ;
+                        SWAP ;
+                        UPDATE ;
+                        DUP 3 ;
+                        CAR ;
+                        CDR ;
+                        CAR ;
                         PAIR ;
                         DIG 2 ;
                         CAR ;
@@ -968,9 +1008,9 @@
              DUP ;
              DUG 2 ;
              SWAP ;
+             CDR ;
              CAR ;
-             CDR ;
-             CDR ;
+             CAR ;
              SWAP ;
              EDIV ;
              IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
@@ -988,9 +1028,9 @@
                { GET 3 ;
                  PUSH nat 1 ;
                  DIG 4 ;
+                 CDR ;
                  CAR ;
-                 CDR ;
-                 CDR ;
+                 CAR ;
                  DIG 3 ;
                  MUL ;
                  DUP 4 ;
@@ -1024,9 +1064,9 @@
              SWAP ;
              DUP ;
              DUG 2 ;
+             CDR ;
              CAR ;
-             CDR ;
-             CDR ;
+             CAR ;
              SWAP ;
              EDIV ;
              IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;

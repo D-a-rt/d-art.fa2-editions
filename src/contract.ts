@@ -135,6 +135,7 @@ export async function deployContract(): Promise<void> {
         storage: {
             next_edition_id: 0,
             editions_metadata: MichelsonMap.fromLiteral({}),
+            hash_used:  MichelsonMap.fromLiteral({}),
             max_editions_per_run: 250,
             assets: {
                 ledger: MichelsonMap.fromLiteral({}),
