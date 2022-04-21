@@ -25,11 +25,16 @@ type mint_edition =
   receivers : address list;
 }
 
+type burn_param = {
+  token_id : token_id;
+  owner : address;
+}
+
 type editions_entrypoints =
  | FA2 of nft_asset_entrypoints
  | Create_editions of mint_edition_run list
  | Mint_editions of mint_edition list
- | Burn_token of token_id
+ | Burn_token of burn_param
 
 let assert_msg (condition, msg : bool * string ) : unit =
   if (not condition) then failwith(msg) else unit
@@ -132,6 +137,7 @@ let editions_main (param, editions_storage : editions_entrypoints * editions_sto
     | Mint_editions mint_param ->
         let () : unit = fail_if_paused editions_storage.admin in
         (mint_editions (mint_param, editions_storage))
-    | Burn_token token_id ->
-      let () : unit = fail_if_not_owner (Tezos.sender, token_id, editions_storage) in
-      ([]: operation list), { editions_storage with assets.ledger =  Big_map.remove token_id editions_storage.assets.ledger }
+    | Burn_token burn_param ->
+      let () = assert_msg (burn_param.owner = Tezos.sender, "NOT OWNER") in
+      let () : unit = fail_if_not_owner (Tezos.sender, burn_param.token_id, editions_storage) in
+      ([]: operation list), { editions_storage with assets.ledger =  Big_map.remove burn_param.token_id editions_storage.assets.ledger }

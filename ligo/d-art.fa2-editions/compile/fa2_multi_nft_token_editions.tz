@@ -1,5 +1,5 @@
 { parameter
-    (or (or (nat %burn_token)
+    (or (or (pair %burn_token (address %owner) (nat %token_id))
             (list %create_editions
                (pair (map %edition_info string bytes)
                      (pair (nat %total_edition_number)
@@ -369,14 +369,25 @@
              DROP 4 ;
              IF_LEFT
                { DIG 2 ;
+                 DROP ;
+                 PUSH string "NOT OWNER" ;
+                 SENDER ;
+                 DUP 3 ;
+                 CAR ;
+                 COMPARE ;
+                 EQ ;
+                 PAIR ;
                  DIG 3 ;
-                 DROP 2 ;
+                 SWAP ;
+                 EXEC ;
+                 DROP ;
                  SWAP ;
                  DUP ;
                  DUG 2 ;
                  SWAP ;
                  DUP ;
                  DUG 2 ;
+                 CDR ;
                  SWAP ;
                  CAR ;
                  CAR ;
@@ -412,6 +423,7 @@
                  CAR ;
                  CAR ;
                  DIG 5 ;
+                 CDR ;
                  NONE address ;
                  SWAP ;
                  UPDATE ;
