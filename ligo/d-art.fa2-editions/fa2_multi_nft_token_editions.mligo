@@ -15,7 +15,7 @@ type mint_edition_run =
   total_edition_number : nat;
   royalties_percentage: nat;
   royalties_address: address;
-  receivers : (address list) option;
+  receivers : address list;
 }
 
 type mint_edition =
@@ -93,20 +93,13 @@ let create_editions ( edition_run_list , storage : mint_edition_run list * editi
         remaining_edition_number = param.total_edition_number;
       } in
       let new_editions_metadata = Big_map.add storage.next_edition_id edition_metadata storage.editions_metadata in
-
-      match param.receivers with
-        | None -> { storage with
-            next_edition_id = storage.next_edition_id + 1n;
-            editions_metadata = new_editions_metadata;
-          }
-        | Some receivers -> (
-          let edition_storage = {storage with
-            next_edition_id = storage.next_edition_id + 1n;
-            editions_metadata = new_editions_metadata;
-          } in
-          let new_editions_storage = mint_edition_to_addresses (storage.next_edition_id, receivers, edition_metadata, edition_storage) in
-          new_editions_storage
-        ) in
+        let edition_storage = {storage with
+          next_edition_id = storage.next_edition_id + 1n;
+          editions_metadata = new_editions_metadata;
+        } in
+        let new_editions_storage = mint_edition_to_addresses (storage.next_edition_id, param.receivers, edition_metadata, edition_storage) in
+        new_editions_storage
+        in
   let new_storage = List.fold mint_single_edition_run edition_run_list storage in
   ([] : operation list), new_storage
 
