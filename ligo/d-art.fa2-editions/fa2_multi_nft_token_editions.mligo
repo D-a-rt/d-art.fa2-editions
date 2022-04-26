@@ -128,6 +128,7 @@ let mint_editions (distribute_list, storage : mint_edition list * editions_stora
 
 let editions_main (param, editions_storage : editions_entrypoints * editions_storage)
     : (operation  list) * editions_storage =
+    let () : unit = assert_msg (Tezos.amount = 0mutez, "AMOUNT_SHOULD_BE_0") in
     match param with
     | FA2 nft_asset_entrypoints ->
         let ops, new_storage = nft_asset_main (nft_asset_entrypoints, editions_storage) in

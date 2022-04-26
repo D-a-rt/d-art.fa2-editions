@@ -65,7 +65,7 @@ export async function deployContract(): Promise<void> {
 
     const editions_contract_metadata = {
         name: 'A:RT',
-        description: 'Implementation of the edition version of the FA2 standart on Tezos.',
+        description: 'Implementation of the edition version of the FA2 standart on Tezos. Big part of the code has been taken on the TQTezos github repo (thanks a lot...). Added some views extension and logic in order to restrict access to a set of addresses (curation) and added a royalties view that can be user on and off-chain.',
         interfaces: ['TZIP-012', 'TZIP-016'],
         views: [{
             name: 'token_metadata',
@@ -157,10 +157,9 @@ export async function deployContract(): Promise<void> {
     }
 
     try {
-        const toolkit = await new TezosToolkit('http://art-basel.tzconnect.berlin:18732');
+        const toolkit = await new TezosToolkit('https://ithacanet.ecadinfra.com');
 
         toolkit.setProvider({ signer: await InMemorySigner.fromSecretKey(process.env.ADMIN_PRIVATE_KEY!) });
-
 
         const originationOp = await toolkit.contract.originate(originateParam);
 

@@ -362,6 +362,16 @@
          APPLY ;
          DIG 6 ;
          UNPAIR ;
+         PUSH string "AMOUNT_SHOULD_BE_0" ;
+         PUSH mutez 0 ;
+         AMOUNT ;
+         COMPARE ;
+         EQ ;
+         PAIR ;
+         DUP 5 ;
+         SWAP ;
+         EXEC ;
+         DROP ;
          IF_LEFT
            { DIG 4 ;
              DIG 5 ;
